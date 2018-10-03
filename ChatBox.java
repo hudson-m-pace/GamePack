@@ -2,6 +2,7 @@ import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
 import java.io.*;
+import java.util.ArrayList;
 
 public class ChatBox extends JDialog {
 
@@ -129,6 +130,60 @@ public class ChatBox extends JDialog {
 		commandArgs[0] = commandArgs[0].toLowerCase();
 
 		switch (commandArgs[0]) {
+
+			case "help":
+				displayMessage("/help: Display this message.");
+				displayMessage("/closeServer: Close the server you're hosting.");
+				displayMessage("/disconnect: Disconnect from the server you're on.");
+				displayMessage("/host <port number>: Start a server on the specified port.");
+				displayMessage("/join <host name> <port number>: Join a server at a specified host name and port number.");
+				displayMessage("/kick <ip address>: Disconnect the specified user. Host only.");
+				displayMessage("/list: List all of the currently connected users.");
+				displayMessage("/setname <new name>: Change your screen name to the specified value.");
+				break;
+
+			case "join":
+				if (!gameSocketController.getRole().equals("")) {
+					displayMessage("You have to leave your current server before joining a new one.");
+					break;
+				}
+				if (commandArgs.length != 3) {
+					displayMessage("Usage: /join <host name> <port number>");
+					break;
+				}
+				try {
+					gameSocketController.connectToServer(commandArgs[1], Integer.parseInt(commandArgs[2]));
+				} catch(NumberFormatException e) {
+					displayMessage("The port number must be an integer.");
+				}
+				break;
+
+			case "kick":
+				if (gameSocketController.getRole().equals("")) {
+					displayMessage("You aren't hosting a server. There's nobody to kick");
+				}
+				else if (!gameSocketController.getRole().equals("host")) {
+					displayMessage("Only the host can kick people.");
+				}
+				else {
+					if (commandArgs.length == 2) {
+
+					}
+					else {
+						displayMessage("usage: /kick <ip address>");
+					}
+				}
+				break;
+
+			case "list":
+				if (gameSocketController.getRole().equals("host")) {
+					ArrayList<String> userList = ((ChatServer)(gameSocketController.getSocket())).getUserList();
+					for (int i = 0; i < userList.size(); i++) {
+						displayMessage(userList.get(i));
+					}
+				}
+				break;
+				
 			case "setname":
 				if (commandArgs.length == 2) {
 					screenName = commandArgs[1];
@@ -138,10 +193,7 @@ public class ChatBox extends JDialog {
 					displayMessage("usage: /setname <new name>");
 				}
 				break;
-			case "help":
-				displayMessage("/help: display this message");
-				displayMessage("/setname <new name>: changes your screen name to the specified value");
-				break;
+
 			default:
 				displayMessage("command \"/" + command + "\" is not known. Type \"/help\" for a list of commands.");
 				break;

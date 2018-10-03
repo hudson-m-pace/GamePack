@@ -43,9 +43,9 @@ public class ChatClient implements GameSocket {
 
 		public void run() {
 			try {
-				receiveMessage(new String[] {"chatmsg", "trying to connect to server..."});
+				chatBox.displayMessage("Trying to connect to server...");
 				Socket server = new Socket(hostName, portNumber);
-				receiveMessage(new String[] {"chatmsg", "connected."});
+				chatBox.displayMessage("Connected.");
 
 				out = new PrintWriter(server.getOutputStream(), true);
 				in = new BufferedReader(new InputStreamReader(server.getInputStream()));
@@ -55,24 +55,23 @@ public class ChatClient implements GameSocket {
 						if (in.ready()) {
 							message[0] = in.readLine();
 							message[1] = in.readLine();
-							//sendMessage(message);
 							receiveMessage(message);
 						}	
 						Thread.sleep(200);
 					}
 					return;
 				} catch (IOException e) {
-					receiveMessage(new String[] {"chatmsg", "exception caught while trying to listen on port " + portNumber + "."});
+					chatBox.displayMessage("Exception caught while trying to listen on port " + portNumber + ".");
 					return;
 				} catch (InterruptedException e) {
-					receiveMessage(new String[] {"chatmsg", "thread was interrupted!"});
+					chatBox.displayMessage("Thread was interrupted.");
 				}
 
 			} catch (UnknownHostException e) {
-				receiveMessage(new String[] {"chatmsg", "Don't know about host " + hostName + "."});
+				chatBox.displayMessage("Don't know about host " + hostName + ".");
 				return;
 			} catch (IOException e) {
-				receiveMessage(new String[] {"chatmsg", "Couldn't get I/O for the connection to " + hostName + "."});
+				chatBox.displayMessage("Couldn't get I/O for the connection to " + hostName + ".");
 				return;
 			}
 		}

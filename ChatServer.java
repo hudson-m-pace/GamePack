@@ -9,6 +9,7 @@ public class ChatServer implements GameSocket {
 	private ChatBox chatBox;
 	private ArrayList<BufferedReader> inList = new ArrayList<BufferedReader>();
 	private ArrayList<PrintWriter> outList = new ArrayList<PrintWriter>();
+	private ArrayList<String> userList = new ArrayList<String>();
 
 	public ChatServer(int portNumber, ChatBox chatBox) throws IOException {
 
@@ -34,6 +35,10 @@ public class ChatServer implements GameSocket {
 				outList.get(i).println(message[1]);
 			}
 		}
+	}
+
+	public ArrayList<String> getUserList() {
+		return userList;
 	}
 
 	public void close() {
@@ -106,6 +111,7 @@ public class ChatServer implements GameSocket {
 				while (!Thread.interrupted()) {
 					Socket clientSocket = serverSocket.accept();
 					receiveMessage(new String[] {"chatmsg", "connection from " + clientSocket.getInetAddress() + "."});
+					userList.add(clientSocket.getInetAddress().getHostAddress());
 					outList.add(new PrintWriter(clientSocket.getOutputStream(), true));
 					inList.add(new BufferedReader(new InputStreamReader(clientSocket.getInputStream())));
 				}

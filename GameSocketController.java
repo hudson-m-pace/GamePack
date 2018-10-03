@@ -8,12 +8,12 @@ public class GameSocketController {
 	private GamePackFrame gamePackFrame;
 	private GameSocket socket;
 	private ChatBox chatBox;
-	private String currentRole, screenName;
+	private String role, screenName;
 
 	public GameSocketController(GamePackFrame gamePackFrame) {
 		this.chatBox = new ChatBox(this);
 		this.gamePackFrame = gamePackFrame;
-		currentRole = "";
+		role = "";
 	}
 
 	
@@ -26,10 +26,6 @@ public class GameSocketController {
 		JMenuItem closeServer = new JMenuItem("close your server");
 		JMenuItem enableJoining = new JMenuItem("allow others to join");
 		JMenuItem disableJoining = new JMenuItem("stop others from joining");
-
-		closeServer.setEnabled(false);
-		enableJoining.setEnabled(false);
-		disableJoining.setEnabled(false);
 
 		hostMenu.add(hostServer);
 		hostMenu.add(closeServer);
@@ -49,64 +45,41 @@ public class GameSocketController {
 		connectionMenu.add(joinMenu);
 
 
-
 		hostServer.addActionListener(new ActionListener() {
-			@Override
 			public void actionPerformed(ActionEvent e) {
-				if (hostServer(getPortNumber())) {
-					hostServer.setEnabled(false);
-					closeServer.setEnabled(true);
-					enableJoining.setEnabled(true);
-					joinServer.setEnabled(false);
+				if (role.equals("")) {
+					hostServer(getPortNumber());
 				}
 			}
 		});
 		closeServer.addActionListener(new ActionListener() {
-			@Override
 			public void actionPerformed(ActionEvent e) {
-				if (closeServer()) {
-					hostServer.setEnabled(true);
-					closeServer.setEnabled(false);
-					enableJoining.setEnabled(false);
-					disableJoining.setEnabled(false);
-					joinServer.setEnabled(true);
+				if (role.equals("host")) {
+					closeServer();
 				}
 			}
 		});
 		enableJoining.addActionListener(new ActionListener() {
-			@Override
 			public void actionPerformed(ActionEvent e) {
-				enableJoining.setEnabled(false);
-				disableJoining.setEnabled(true);
 			}
 		});
 		disableJoining.addActionListener(new ActionListener() {
-			@Override
 			public void actionPerformed(ActionEvent e) {
-				enableJoining.setEnabled(true);
-				disableJoining.setEnabled(false);
 			}
 		});
 
 		
-
 		joinServer.addActionListener(new ActionListener() {
-			@Override
 			public void actionPerformed(ActionEvent e) {
-				if (connectToServer(getHostName(), getPortNumber())) {
-					joinServer.setEnabled(false);
-					leaveServer.setEnabled(true);
-					hostServer.setEnabled(false);
+				if (role.equals("")) {
+					connectToServer(getHostName(), getPortNumber());
 				}
 			}
 		});
 		leaveServer.addActionListener(new ActionListener() {
-			@Override
 			public void actionPerformed(ActionEvent e) {
-				if (disconnect()) {
-					joinServer.setEnabled(true);
-					leaveServer.setEnabled(false);
-					hostServer.setEnabled(true);
+				if (role.equals("client")) {
+					disconnect();
 				}
 			}
 		});
@@ -121,12 +94,12 @@ public class GameSocketController {
 
 
 	public String getRole() {
-		return currentRole;
+		return role;
 	}
 
 
 	// Gets a port number from user.
-	public int getPortNumber() {
+	private int getPortNumber() {
 		String input = (String)JOptionPane.showInputDialog(
 			(JFrame)gamePackFrame,
 			"port number:",
@@ -151,7 +124,7 @@ public class GameSocketController {
 
 
 	// Gets a host name from user.
-	public String getHostName() {
+	private String getHostName() {
 		String input = (String)JOptionPane.showInputDialog(
 			gamePackFrame,
 			"Enter the host name",
@@ -172,7 +145,7 @@ public class GameSocketController {
 		try {
 			socket = new ChatServer(portNumber, chatBox);
 			screenName = "host: ";
-			currentRole = "host";
+			role = "host";
 		} catch(IOException e) {
 			chatBox.displayMessage("Exception caught while listening on port " + portNumber + ".");
 			chatBox.displayMessage(e.getMessage());
@@ -183,9 +156,9 @@ public class GameSocketController {
 
 
 	public Boolean closeServer() {
-		if (currentRole == "host") {
+		if (role == "host") {
 			socket.close();
-			currentRole = "";
+			role = "";
 			return true;
 		}
 		return false;
@@ -194,13 +167,13 @@ public class GameSocketController {
 	
 	// Creates a new ChatClient based on the give host and port number.
 	public Boolean connectToServer(String hostName, int portNumber) {
-		if (portNumber == -1) {
+		if (portNumber < 0) {
 			return false;
 		}
 		try {
 			socket = new ChatClient(hostName, portNumber, chatBox);
 			screenName = "client: ";
-			currentRole = "client";
+			role = "client";
 		} catch(IOException e) {
 			chatBox.displayMessage("Exception caught while attempting to connect to " + hostName + ":" + portNumber + ".");
 			chatBox.displayMessage(e.getMessage());
@@ -211,9 +184,9 @@ public class GameSocketController {
 
 
 	public Boolean disconnect() {
-		if (currentRole == "client") {
+		if (role == "client") {
 			socket.close();
-			currentRole = "";
+			role = "";
 			return true;
 		}
 		return false;
