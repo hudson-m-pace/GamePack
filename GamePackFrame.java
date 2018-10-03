@@ -18,15 +18,11 @@ public class GamePackFrame extends JFrame {
 	private JMenuBar menuBar;
 	private JMenu gameMenu;
 	private JMenuItem returnMenuItem, newGameMenuItem;
-	private ChatBox chatBox;
 	private GameSocketController gameSocketController;
-	private ChatToSocketInterface chatToSocketInterface;
 
 	public GamePackFrame() {
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
-		chatBox = new ChatBox();
-		chatToSocketInterface = new ChatToSocketInterface(chatBox);
-		gameSocketController = new GameSocketController(chatToSocketInterface, this);
+		gameSocketController = new GameSocketController(this);
 		createMenu();
 		createComponents();
 		setSize(1000, 1000);
@@ -58,8 +54,8 @@ public class GamePackFrame extends JFrame {
 		});
 		gameMenu.add(returnMenuItem);
 
-		JMenu connectionMenu = chatBox.createMenu();
-		gameSocketController.createMenu(connectionMenu);
+		
+		JMenu connectionMenu = gameSocketController.createMenu();
 		menuBar.add(connectionMenu);
 
 		setJMenuBar(menuBar);

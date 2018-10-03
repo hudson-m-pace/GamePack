@@ -10,22 +10,18 @@ public class ChatClient implements GameSocket {
 	private Thread receiver;
 	private PrintWriter out;
 	private BufferedReader in;
-	private ChatToSocketInterface chatToSocketInterface;
 	private Boolean socketConnected;
 
-	public ChatClient(String hostName, int portNumber) throws IOException {
+	public ChatClient(String hostName, int portNumber, ChatBox chatBox) throws IOException {
 
 		this.hostName = hostName;
 		this.portNumber = portNumber;
+		this.chatBox = chatBox;
 
 		socketConnected = false;
 
 		receiver = new Thread(new Receiver());
 		receiver.start();
-	}
-
-	public ArrayList<PrintWriter> getOutputList() {
-		return null;
 	}
 
 	public void close() {
@@ -39,10 +35,7 @@ public class ChatClient implements GameSocket {
 	}
 
 	public void receiveMessage(String[] message) {
-		//chatBox.displayMessage(message[1]);
-		if (socketConnected) {
-			chatToSocketInterface.sendToChat(message);
-		}
+		chatBox.displayMessage(message[1]);
 	}
 
 
@@ -83,11 +76,5 @@ public class ChatClient implements GameSocket {
 				return;
 			}
 		}
-	}
-
-	public void setChatToSocketInterface(ChatToSocketInterface chatToSocketInterface) {
-		this.chatToSocketInterface = chatToSocketInterface;
-		socketConnected = true;
-		//chatToSocketInterface.connectToSocket();
 	}
 }

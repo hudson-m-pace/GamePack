@@ -6,26 +6,21 @@ public class ChatServer implements GameSocket {
 
 	private Thread receiver, connectionListener;
 	private int portNumber;
+	private ChatBox chatBox;
 	private ArrayList<BufferedReader> inList = new ArrayList<BufferedReader>();
 	private ArrayList<PrintWriter> outList = new ArrayList<PrintWriter>();
-	private ChatToSocketInterface chatToSocketInterface;
 
-	public ChatServer(int portNumber) throws IOException {
+	public ChatServer(int portNumber, ChatBox chatBox) throws IOException {
 
 		this.portNumber = portNumber;
+		this.chatBox = chatBox;
 
 		connectionListener = new Thread(new ConnectionListener());
 		connectionListener.start();
 	}
 
-	public ArrayList<PrintWriter> getOutputList() {
-		return outList;
-	}
-
 	public void receiveMessage(String[] message) {
-		if (chatToSocketInterface != null) {
-			chatToSocketInterface.sendToChat(message);
-		}
+		chatBox.displayMessage(message[1]);
 	}
 
 	public void sendMessage(String[] message) {
@@ -44,9 +39,7 @@ public class ChatServer implements GameSocket {
 	public void close() {
 		receiver.interrupt();
 		connectionListener.interrupt();
-		if (chatToSocketInterface != null) {
-			chatToSocketInterface.sendToChat(new String[] {"privatemsg", "server closed"});
-		}
+		chatBox.displayMessage("Server closed.");
 	}
 
 	public Boolean stopAllowingConnections() {
@@ -121,10 +114,5 @@ public class ChatServer implements GameSocket {
 				receiveMessage(new String[] {"chatmsg", e.getMessage()});
 			}
 		}
-	}
-
-	public void setChatToSocketInterface(ChatToSocketInterface chatToSocketInterface) {
-		this.chatToSocketInterface = chatToSocketInterface;
-		//chatToSocketInterface.connectToSocket();
 	}
 }

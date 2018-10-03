@@ -7,17 +7,19 @@ import java.awt.event.ActionEvent;
 public class GameSocketController {
 	private GamePackFrame gamePackFrame;
 	private GameSocket socket;
+	private ChatBox chatBox;
 	private String currentRole, screenName;
-	private ChatToSocketInterface chatToSocketInterface;
 
-	public GameSocketController(ChatToSocketInterface chatToSocketInterface, GamePackFrame gamePackFrame) {
-		this.chatToSocketInterface = chatToSocketInterface;
+	public GameSocketController(GamePackFrame gamePackFrame) {
+		this.chatBox = new ChatBox(this);
 		this.gamePackFrame = gamePackFrame;
 		currentRole = "";
 	}
 
 	
-	public void createMenu(JMenu connectionMenu) {
+	public JMenu createMenu() {
+
+		JMenu connectionMenu = chatBox.createMenu();
 
 		JMenu hostMenu = new JMenu("host");
 		JMenuItem hostServer = new JMenuItem("host a server");
@@ -108,8 +110,22 @@ public class GameSocketController {
 				}
 			}
 		});
+
+		return connectionMenu;
 	}
 
+
+	public GameSocket getSocket() {
+		return socket;
+	}
+
+
+	public String getRole() {
+		return currentRole;
+	}
+
+
+	// Gets a port number from user.
 	public int getPortNumber() {
 		String input = (String)JOptionPane.showInputDialog(
 			(JFrame)gamePackFrame,
@@ -125,32 +141,16 @@ public class GameSocketController {
 				return portChoice;
 			}
 			else {
-				chatToSocketInterface.sendToChat(new String[] {ChatBox.PRIVATE_MESSAGE, "You must choose a positive port."});
+				chatBox.displayMessage("You must choose a positive port.");
 			}
 		} catch(NumberFormatException e) {
-			chatToSocketInterface.sendToChat(new String[] {ChatBox.PRIVATE_MESSAGE, "The port number must be an integer."});
+			chatBox.displayMessage("The port number must be an integer");
 		}
 		return -1;
 	}
 
 
-	public Boolean hostServer(int portNumber) {
-		if (portNumber == -1) {
-			return false;
-		}
-		try {
-			socket = new ChatServer(portNumber);
-			screenName = "host: ";
-			currentRole = "host";
-			chatToSocketInterface.connectToSocket(socket);
-		} catch(IOException e) {
-			chatToSocketInterface.sendToChat(new String[] {ChatBox.PRIVATE_MESSAGE, "Exception caught while listening on port " + portNumber + "."});
-			chatToSocketInterface.sendToChat(new String[] {ChatBox.PRIVATE_MESSAGE, e.getMessage()});
-			return false;
-		}
-		return true;
-	}
-
+	// Gets a host name from user.
 	public String getHostName() {
 		String input = (String)JOptionPane.showInputDialog(
 			gamePackFrame,
@@ -162,23 +162,25 @@ public class GameSocketController {
 			"");
 		return input;
 	}
-	public Boolean connectToServer(String hostName, int portNumber) {
+
+
+	// Creates a new ChatServer on the given port.
+	public Boolean hostServer(int portNumber) {
 		if (portNumber == -1) {
 			return false;
 		}
 		try {
-			socket = new ChatClient(hostName, portNumber); //, chatBox);
-			screenName = "client: ";
-			currentRole = "client";
-			chatToSocketInterface.connectToSocket(socket);
+			socket = new ChatServer(portNumber, chatBox);
+			screenName = "host: ";
+			currentRole = "host";
 		} catch(IOException e) {
-			//chatBox.displayMessage("Exception caught when trying to listen on port " + portNumber + ".");
-			//chatBox.displayMessage(e.getMessage());
-			chatToSocketInterface.sendToChat(new String[] {ChatBox.PRIVATE_MESSAGE, "Could not connect."});
+			chatBox.displayMessage("Exception caught while listening on port " + portNumber + ".");
+			chatBox.displayMessage(e.getMessage());
 			return false;
 		}
 		return true;
 	}
+
 
 	public Boolean closeServer() {
 		if (currentRole == "host") {
@@ -189,6 +191,25 @@ public class GameSocketController {
 		return false;
 	}
 
+	
+	// Creates a new ChatClient based on the give host and port number.
+	public Boolean connectToServer(String hostName, int portNumber) {
+		if (portNumber == -1) {
+			return false;
+		}
+		try {
+			socket = new ChatClient(hostName, portNumber, chatBox);
+			screenName = "client: ";
+			currentRole = "client";
+		} catch(IOException e) {
+			chatBox.displayMessage("Exception caught while attempting to connect to " + hostName + ":" + portNumber + ".");
+			chatBox.displayMessage(e.getMessage());
+			return false;
+		}
+		return true;
+	}
+
+
 	public Boolean disconnect() {
 		if (currentRole == "client") {
 			socket.close();
@@ -196,9 +217,5 @@ public class GameSocketController {
 			return true;
 		}
 		return false;
-	}
-
-	public GameSocket getSocket() {
-		return socket;
 	}
 }

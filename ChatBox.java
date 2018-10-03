@@ -7,12 +7,14 @@ public class ChatBox extends JDialog {
 
 	private JTextArea messageBox;
 	private String screenName;
-	private ChatToSocketInterface chatToSocketInterface;
+	private GameSocketController gameSocketController;
 	public static String PRIVATE_MESSAGE = "privatemsg";
 	public static String PUBLIC_MESSAGE = "publicmsg";
 
 
-	public ChatBox() {
+	public ChatBox(GameSocketController gameSocketController) {
+		this.gameSocketController = gameSocketController;
+
 		add(createChatBox());
 		setSize(600, 300);
 		setVisible(false);
@@ -103,12 +105,6 @@ public class ChatBox extends JDialog {
 	}
 
 
-	// Links this ChatBox to a socket interface
-	public void setChatToSocketInterface(ChatToSocketInterface chatToSocketInterface) {
-		this.chatToSocketInterface = chatToSocketInterface;
-	}
-
-
 	// Runs when a user sends a message from their chat box. If it's a command, run it. Otherwise, send it to the interface.
 	public void sendMessage(String[] message) {
 		if (!message[1].equals("")) {
@@ -117,18 +113,13 @@ public class ChatBox extends JDialog {
 			}
 			else {
 				message[1] = screenName + ": " + message[1];
-				if (chatToSocketInterface != null) {
-					chatToSocketInterface.sendToChat(message);
+				displayMessage(message[1]);
+				if (!gameSocketController.getRole().equals("")) {
+					gameSocketController.getSocket().sendMessage(message);
 				}
 			}
 		}
 	}
-
-	
-
-	
-
-	
 
 	
 	// Controls all commands for the chat box.
