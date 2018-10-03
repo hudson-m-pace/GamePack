@@ -25,8 +25,8 @@ public class GamePackFrame extends JFrame {
 	public GamePackFrame() {
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 		chatBox = new ChatBox();
-		gameSocketController = new GameSocketController(this);
-		chatToSocketInterface = new ChatToSocketInterface(gameSocketController, chatBox);
+		chatToSocketInterface = new ChatToSocketInterface(chatBox);
+		gameSocketController = new GameSocketController(chatToSocketInterface, this);
 		createMenu();
 		createComponents();
 		setSize(1000, 1000);

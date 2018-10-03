@@ -6,24 +6,23 @@ import java.io.*;
 public class ChatBox extends JDialog {
 
 	private JTextArea messageBox;
-	private JFrame frame;
-	private GameSocket socket;
-	private JTextField entryLine;
-	private String currentRole, screenName;
+	private String screenName;
 	private ChatToSocketInterface chatToSocketInterface;
-	private Boolean connectedToSocket;
 	public static String PRIVATE_MESSAGE = "privatemsg";
 	public static String PUBLIC_MESSAGE = "publicmsg";
 
+
 	public ChatBox() {
-		currentRole = "";
 		add(createChatBox());
-		setSize(400, 300);
+		setSize(600, 300);
 		setVisible(false);
 		setTitle("chat-box");
 	}
 
-	public JMenu createMenu() { // creates the menu options for opening and closing the chat box. Added to the menubar in gamepackframe
+
+	// Makes the chat menu and adds options for opening and closing the chat box. 
+	public JMenu createMenu() {
+
 		JMenu connectionMenu = new JMenu("connection");
 		JMenuItem openChatWindowItem = new JMenuItem("open chat window");
 		openChatWindowItem.addActionListener(new ActionListener() {
@@ -32,6 +31,7 @@ public class ChatBox extends JDialog {
 			}
 		});
 		connectionMenu.add(openChatWindowItem);
+
 		JMenuItem closeChatWindowItem = new JMenuItem("close chat window");
 		closeChatWindowItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -42,8 +42,13 @@ public class ChatBox extends JDialog {
 
 		return connectionMenu;
 	}
+
+
 	public JPanel createChatBox() {
+
 		JScrollPane scrollPane;
+		JTextField entryLine;
+		entryLine = new JTextField(20);
 
 		//create the content-pane-to-be
 		JPanel chatBox = new JPanel(new GridBagLayout());
@@ -72,7 +77,7 @@ public class ChatBox extends JDialog {
 				entryLine.setText("");
 			}
 		};
-		entryLine = new JTextField(20);
+		
 		entryLine.addActionListener(sendMessageAction);
 		c.gridy = 1;
 		c.gridwidth = 1;
@@ -90,6 +95,21 @@ public class ChatBox extends JDialog {
 		return chatBox;
 	}
 
+
+	// Write a message to the chatbox.
+	public void displayMessage(String message) {
+		messageBox.append(message + "\n");
+		messageBox.setCaretPosition(messageBox.getDocument().getLength());
+	}
+
+
+	// Links this ChatBox to a socket interface
+	public void setChatToSocketInterface(ChatToSocketInterface chatToSocketInterface) {
+		this.chatToSocketInterface = chatToSocketInterface;
+	}
+
+
+	// Runs when a user sends a message from their chat box. If it's a command, run it. Otherwise, send it to the interface.
 	public void sendMessage(String[] message) {
 		if (!message[1].equals("")) {
 			if (message[1].charAt(0) == '/') {
@@ -97,36 +117,21 @@ public class ChatBox extends JDialog {
 			}
 			else {
 				message[1] = screenName + ": " + message[1];
-				displayMessage(message[1]);
-				if (chatToSocketInterface != null) { //socket != null) {
-					//socket.sendMessage(message);
-					chatToSocketInterface.sendToSocket(message);
+				if (chatToSocketInterface != null) {
+					chatToSocketInterface.sendToChat(message);
 				}
 			}
 		}
 	}
 
-	public void setSocket(GameSocket socket) {
-		this.socket = socket;
-	}
-
-	public String getRole() {
-		return currentRole;
-	}
+	
 
 	
 
-	public void displayMessage(String message) {
-		messageBox.append(message + "\n");
-		messageBox.setCaretPosition(messageBox.getDocument().getLength());
-	}
-
-	//public void setGameBoard(GameBoard gameBoard) {
-	//	this.gameBoard = gameBoard;
-	//}
-
 	
 
+	
+	// Controls all commands for the chat box.
 	public void runCommand(String command) {
 		String[] commandArgs = command.split(" ");
 
@@ -142,13 +147,13 @@ public class ChatBox extends JDialog {
 					displayMessage("usage: /setname <new name>");
 				}
 				break;
+			case "help":
+				displayMessage("/help: display this message");
+				displayMessage("/setname <new name>: changes your screen name to the specified value");
+				break;
 			default:
 				displayMessage("command \"/" + command + "\" is not known. Type \"/help\" for a list of commands.");
 				break;
 		}
-	}
-
-	public void setChatToSocketInterface(ChatToSocketInterface chatToSocketInterface) {
-		this.chatToSocketInterface = chatToSocketInterface;
 	}
 }

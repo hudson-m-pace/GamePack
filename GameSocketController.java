@@ -10,20 +10,23 @@ public class GameSocketController {
 	private String currentRole, screenName;
 	private ChatToSocketInterface chatToSocketInterface;
 
-	public GameSocketController(GamePackFrame gamePackFrame) {
+	public GameSocketController(ChatToSocketInterface chatToSocketInterface, GamePackFrame gamePackFrame) {
+		this.chatToSocketInterface = chatToSocketInterface;
 		this.gamePackFrame = gamePackFrame;
 		currentRole = "";
 	}
 
 	
 	public void createMenu(JMenu connectionMenu) {
+
 		JMenu hostMenu = new JMenu("host");
 		JMenuItem hostServer = new JMenuItem("host a server");
 		JMenuItem closeServer = new JMenuItem("close your server");
-		closeServer.setEnabled(false);
 		JMenuItem enableJoining = new JMenuItem("allow others to join");
-		enableJoining.setEnabled(false);
 		JMenuItem disableJoining = new JMenuItem("stop others from joining");
+
+		closeServer.setEnabled(false);
+		enableJoining.setEnabled(false);
 		disableJoining.setEnabled(false);
 
 		hostMenu.add(hostServer);
@@ -32,13 +35,27 @@ public class GameSocketController {
 		hostMenu.add(disableJoining);
 		connectionMenu.add(hostMenu);
 
+
+		JMenu joinMenu = new JMenu("join");
+		JMenuItem joinServer = new JMenuItem("join a server");
+		JMenuItem leaveServer = new JMenuItem("disconnect from server");
+
+		leaveServer.setEnabled(false);
+
+		joinMenu.add(joinServer);
+		joinMenu.add(leaveServer);
+		connectionMenu.add(joinMenu);
+
+
+
 		hostServer.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				if (hostServer(getPortNumber())) {
 					hostServer.setEnabled(false);
 					closeServer.setEnabled(true);
-					disableJoining.setEnabled(true);
+					enableJoining.setEnabled(true);
+					joinServer.setEnabled(false);
 				}
 			}
 		});
@@ -50,30 +67,26 @@ public class GameSocketController {
 					closeServer.setEnabled(false);
 					enableJoining.setEnabled(false);
 					disableJoining.setEnabled(false);
+					joinServer.setEnabled(true);
 				}
 			}
 		});
 		enableJoining.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-
+				enableJoining.setEnabled(false);
+				disableJoining.setEnabled(true);
 			}
 		});
 		disableJoining.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-
+				enableJoining.setEnabled(true);
+				disableJoining.setEnabled(false);
 			}
 		});
 
-		JMenu joinMenu = new JMenu("join");
-		JMenuItem joinServer = new JMenuItem("join a server");
-		JMenuItem leaveServer = new JMenuItem("disconnect from server");
-		leaveServer.setEnabled(false);
-
-		joinMenu.add(joinServer);
-		joinMenu.add(leaveServer);
-		connectionMenu.add(joinMenu);
+		
 
 		joinServer.addActionListener(new ActionListener() {
 			@Override
@@ -81,6 +94,7 @@ public class GameSocketController {
 				if (connectToServer(getHostName(), getPortNumber())) {
 					joinServer.setEnabled(false);
 					leaveServer.setEnabled(true);
+					hostServer.setEnabled(false);
 				}
 			}
 		});
@@ -90,6 +104,7 @@ public class GameSocketController {
 				if (disconnect()) {
 					joinServer.setEnabled(true);
 					leaveServer.setEnabled(false);
+					hostServer.setEnabled(true);
 				}
 			}
 		});
@@ -110,10 +125,10 @@ public class GameSocketController {
 				return portChoice;
 			}
 			else {
-				//chatBox.displayMessage("You must choose a positive port.");
+				chatToSocketInterface.sendToChat(new String[] {ChatBox.PRIVATE_MESSAGE, "You must choose a positive port."});
 			}
 		} catch(NumberFormatException e) {
-			//chatBox.displayMessage("Invalid input. The port number must be an integer.");
+			chatToSocketInterface.sendToChat(new String[] {ChatBox.PRIVATE_MESSAGE, "The port number must be an integer."});
 		}
 		return -1;
 	}
@@ -124,13 +139,13 @@ public class GameSocketController {
 			return false;
 		}
 		try {
-			socket = new ChatServer(portNumber); //, chatBox);
+			socket = new ChatServer(portNumber);
 			screenName = "host: ";
 			currentRole = "host";
-			chatToSocketInterface.connectToSocket();
+			chatToSocketInterface.connectToSocket(socket);
 		} catch(IOException e) {
-			//chatBox.displayMessage("Exception caught when trying to listen on port " + portNumber + ".");
-			//chatBox.displayMessage(e.getMessage());
+			chatToSocketInterface.sendToChat(new String[] {ChatBox.PRIVATE_MESSAGE, "Exception caught while listening on port " + portNumber + "."});
+			chatToSocketInterface.sendToChat(new String[] {ChatBox.PRIVATE_MESSAGE, e.getMessage()});
 			return false;
 		}
 		return true;
@@ -155,10 +170,11 @@ public class GameSocketController {
 			socket = new ChatClient(hostName, portNumber); //, chatBox);
 			screenName = "client: ";
 			currentRole = "client";
-			chatToSocketInterface.connectToSocket();
+			chatToSocketInterface.connectToSocket(socket);
 		} catch(IOException e) {
 			//chatBox.displayMessage("Exception caught when trying to listen on port " + portNumber + ".");
 			//chatBox.displayMessage(e.getMessage());
+			chatToSocketInterface.sendToChat(new String[] {ChatBox.PRIVATE_MESSAGE, "Could not connect."});
 			return false;
 		}
 		return true;
@@ -184,9 +200,5 @@ public class GameSocketController {
 
 	public GameSocket getSocket() {
 		return socket;
-	}
-
-	public void setChatToSocketInterface(ChatToSocketInterface chatToSocketInterface) {
-		this.chatToSocketInterface = chatToSocketInterface;
 	}
 }

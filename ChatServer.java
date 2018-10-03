@@ -3,24 +3,23 @@ import java.net.*;
 import java.util.ArrayList;
 
 public class ChatServer implements GameSocket {
-	private ChatBox chatBox;
+
 	private Thread receiver, connectionListener;
 	private int portNumber;
 	private ArrayList<BufferedReader> inList = new ArrayList<BufferedReader>();
 	private ArrayList<PrintWriter> outList = new ArrayList<PrintWriter>();
 	private ChatToSocketInterface chatToSocketInterface;
-	private Boolean socketConnected;
 
-	public ChatServer(int portNumber) throws IOException { //ChatBox chatBox) throws IOException {
+	public ChatServer(int portNumber) throws IOException {
 
-		//this.chatBox = chatBox;
 		this.portNumber = portNumber;
-		//this.chatBox.setSocket(this);
-
-		socketConnected = false;
 
 		connectionListener = new Thread(new ConnectionListener());
 		connectionListener.start();
+	}
+
+	public ArrayList<PrintWriter> getOutputList() {
+		return outList;
 	}
 
 	public void receiveMessage(String[] message) {

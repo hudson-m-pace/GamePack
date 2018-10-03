@@ -1,5 +1,6 @@
 import java.io.*;
 import java.net.*;
+import java.util.ArrayList;
 
 public class ChatClient implements GameSocket {
 
@@ -12,17 +13,19 @@ public class ChatClient implements GameSocket {
 	private ChatToSocketInterface chatToSocketInterface;
 	private Boolean socketConnected;
 
-	public ChatClient(String hostName, int portNumber) throws IOException { //, ChatBox chatBox) throws IOException {
+	public ChatClient(String hostName, int portNumber) throws IOException {
 
 		this.hostName = hostName;
 		this.portNumber = portNumber;
-		//this.chatBox = chatBox;
-		//this.chatBox.setSocket(this);
 
 		socketConnected = false;
 
 		receiver = new Thread(new Receiver());
 		receiver.start();
+	}
+
+	public ArrayList<PrintWriter> getOutputList() {
+		return null;
 	}
 
 	public void close() {
