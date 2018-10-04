@@ -8,10 +8,9 @@ public class PlayerGameSquare extends GameSquare {
 	private Player player;
 	private Enemy enemy;
 
-	public PlayerGameSquare(int squareX, int squareY, String role, GameSquare[][] playerPanel, BattleshipBoard battleshipBoard, Player player, Enemy enemy) {
+	public PlayerGameSquare(int squareX, int squareY, String role, BattleshipBoard battleshipBoard, Player player, Enemy enemy) {
 		super(squareX, squareY, role);
 		addMouseListener(new PlayerGameSquareListener(this));
-		this.playerPanel = playerPanel;
 		this.player = player;
 		this.battleshipBoard = battleshipBoard;
 		this.enemy = enemy;
@@ -44,12 +43,8 @@ public class PlayerGameSquare extends GameSquare {
 
 		public void mousePressed(MouseEvent e) {
 
-			//Boat currentBoat = gameBoard.getCurrentBoat();
 			if (battleshipBoard.getCurrentMode().equals(BattleshipBoard.PLACE_SHIPS)) {
 				if (SwingUtilities.isLeftMouseButton(e)) {
-					/*if (currentBoat.place(playerPanel, currentSquare)) {
-						gameBoard.getNextBoat();
-					}*/
 					if (player.placeBoat(currentSquare)) {
 						enemy.placeBoats();
 						battleshipBoard.changeGameMode();
@@ -57,7 +52,6 @@ public class PlayerGameSquare extends GameSquare {
 					}
 				}
 				else if (SwingUtilities.isRightMouseButton(e)) {
-					//currentBoat.rotate(playerPanel, currentSquare);
 					player.rotateBoat(currentSquare);
 				}
 			}

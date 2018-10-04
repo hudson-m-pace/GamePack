@@ -10,24 +10,49 @@ public class BattleshipBoard extends GameBoard {
 	private static String WAIT_FOR_ATTACK = "waitForAttack";
 	public static String MAIN_GAME = "mainGame";
 	private GameSquare[][] enemyPanel, playerPanel;
-	private Boat currentBoat;
-	private int remainingBoats;
-	private JTextArea messageBox;
+	private JPanel textPanel, board;
 	private JFrame frame;
-	private JTextField entryLine;
-	private String currentRole, screenName;
-	private GameBoard gameBoard;
 	private JLabel gameText;
 	private Enemy enemy;
 	private Player player;
-	private JPanel textPanel;
+	private GameSocketController gameSocketController;
 
 
-	public BattleshipBoard(GamePackFrame gamePackFrame) {
+	public BattleshipBoard(GamePackFrame gamePackFrame, GameSocketController gameSocketController) {
 		super(gamePackFrame);
+		createBoard();
+	}
 
+
+	public JMenu createMenu() {
+		JMenu menu = new JMenu("battleship");
+		JMenuItem newGame = new JMenuItem("start a new game");
+		newGame.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				remove(board);
+				createBoard();
+			}
+		});
+		menu.add(newGame);
+
+		JMenuItem startMultiplayerGame = new JMenuItem("start a multiplayer game");
+		startMultiplayerGame.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if (gameSocketController.getRole().equals("")) {
+					gameSocketController.getSocket().receiveMessage("You aren't connected to a server.")
+					return;
+				}
+				remove(board);
+				createBoard();
+			}
+		})
+		return menu;
+	}
+
+
+	// Creates a new board. If one already exists, remove it.
+	public void createBoard() {
 		currentMode = PLACE_SHIPS;
-		
 		enemyPanel = new GameSquare[10][10];
 		playerPanel = new GameSquare[10][10];
 		gameText = new JLabel();
@@ -35,20 +60,8 @@ public class BattleshipBoard extends GameBoard {
 		enemy = new Enemy(enemyPanel, this);
 		player = new Player(playerPanel, this);
 
-		createBoard();
-
-	}
-
-	public JMenu createMenu() {
-		JMenu menu = new JMenu("battleship");
-		JMenuItem exitMenuItem = new JMenuItem("return to menu");
-		menu.add(exitMenuItem);
-		return menu;
-	}
-
-	public void createBoard() {
 		GridBagConstraints c = new GridBagConstraints();
-		JPanel board = new JPanel(new GridBagLayout());
+		board = new JPanel(new GridBagLayout());
 		textPanel = new JPanel(new GridBagLayout());
 		board.setOpaque(true);
 		c.weightx = 1;
@@ -70,12 +83,14 @@ public class BattleshipBoard extends GameBoard {
 		c.gridx = 0;
 		c.gridy = 0;
 		add(board, c);
+		revalidate();
 	}
 
+
 	public Container createBoardSection(GameSquare[][] squares, String role) {
-		JPanel board = new JPanel(new GridBagLayout());
-		board.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
-		board.setOpaque(true);
+		JPanel section = new JPanel(new GridBagLayout());
+		section.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
+		section.setOpaque(true);
 		GridBagConstraints c = new GridBagConstraints();
 		c.weightx = 1;
 		c.weighty = 1;
@@ -89,20 +104,31 @@ public class BattleshipBoard extends GameBoard {
 					squares[i][j] = new EnemyGameSquare(i, j, role, playerPanel, enemy, this, player);
 				}
 				else if (role.equals("player")) {
-					squares[i][j] = new PlayerGameSquare(i, j, role, playerPanel, this, player, enemy);
+					squares[i][j] = new PlayerGameSquare(i, j, role, this, player, enemy);
 				}
 
 				c.gridy = j;
-				board.add(squares[i][j], c);
+				section.add(squares[i][j], c);
 			}
 		}
-		return board;
+		return section;
+	}
+
+
+	public void setGameText(String newText) {
+		gameText.setText(newText);
 	}
 
 
 	public void changeGameMode() {
 		currentMode = MAIN_GAME;
 	}
+
+
+	public String getCurrentMode() {
+		return currentMode;
+	}
+
 
 	public void updateTargetList() {
 		Boat[] boatList = enemy.getBoatList();
@@ -137,12 +163,7 @@ public class BattleshipBoard extends GameBoard {
 		}
 	}
 
-	public String getCurrentMode() {
-		return currentMode;
-	}
-	public Boat getCurrentBoat() {
-		return currentBoat;
-	}
+	
 	public void checkForWin(Boat[] boatList, String playerName) {
 		//Boat[] boatList = enemy.getBoatList();
 		for (int i = 0; i < boatList.length; i++) {
@@ -156,9 +177,5 @@ public class BattleshipBoard extends GameBoard {
 		else {
 			gameText.setText("you win.");
 		}
-	}
-
-	public void setGameText(String newText) {
-		gameText.setText(newText);
 	}
 }

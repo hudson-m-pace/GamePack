@@ -93,7 +93,7 @@ public class GamePackFrame extends JFrame {
 		}
 		switch(gameName) {
 			case "battleship":
-				gameCard = new BattleshipBoard(this);
+				gameCard = new BattleshipBoard(this, gameSocketController);
 				break;
 			case "fifteen":
 				gameCard = new FifteenBoard(this);
