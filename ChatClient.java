@@ -26,7 +26,7 @@ public class ChatClient implements GameSocket {
 
 	public void close() {
 		receiver.interrupt();
-		receiveMessage(new String[] {"chatmsg", "disconnected."});
+		receiveMessage("disconnected.");
 	}
 
 	public void sendMessage(String[] message) {
@@ -34,8 +34,8 @@ public class ChatClient implements GameSocket {
 		out.println(message[1]);
 	}
 
-	public void receiveMessage(String[] message) {
-		chatBox.displayMessage(message[1]);
+	public void receiveMessage(String message) {
+		chatBox.displayMessage(message);
 	}
 
 
@@ -51,11 +51,8 @@ public class ChatClient implements GameSocket {
 				in = new BufferedReader(new InputStreamReader(server.getInputStream()));
 				try {
 					while (!Thread.interrupted()) {
-						String[] message = new String[2];
 						if (in.ready()) {
-							message[0] = in.readLine();
-							message[1] = in.readLine();
-							receiveMessage(message);
+							receiveMessage(in.readLine());
 						}	
 						Thread.sleep(200);
 					}

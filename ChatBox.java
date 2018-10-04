@@ -11,6 +11,7 @@ public class ChatBox extends JDialog {
 	private GameSocketController gameSocketController;
 	public static String PRIVATE_MESSAGE = "privatemsg";
 	public static String PUBLIC_MESSAGE = "publicmsg";
+	public static String HOST_REQUEST = "hostrequest";
 
 
 	public ChatBox(GameSocketController gameSocketController) {
@@ -108,7 +109,7 @@ public class ChatBox extends JDialog {
 
 	// Runs when a user sends a message from their chat box. If it's a command, run it. Otherwise, send it to the interface.
 	public void sendMessage(String[] message) {
-		if (!message[1].equals("")) {
+		if (message[0].equals(PUBLIC_MESSAGE) && !message[1].equals("")) {
 			if (message[1].charAt(0) == '/') {
 				runCommand(message[1].substring(1));
 			}
@@ -119,6 +120,9 @@ public class ChatBox extends JDialog {
 					gameSocketController.getSocket().sendMessage(message);
 				}
 			}
+		}
+		else if (message[0].equals(HOST_REQUEST)) {
+			gameSocketController.getSocket().sendMessage(message);
 		}
 	}
 
@@ -139,7 +143,24 @@ public class ChatBox extends JDialog {
 				displayMessage("/join <host name> <port number>: Join a server at a specified host name and port number.");
 				displayMessage("/kick <ip address>: Disconnect the specified user. Host only.");
 				displayMessage("/list: List all of the currently connected users.");
+				displayMessage("/pm <ip address> <message>: Send a private message to the specified ip.");
 				displayMessage("/setname <new name>: Change your screen name to the specified value.");
+				break;
+
+			case "host":
+				if (!gameSocketController.getRole().equals("")) {
+					displayMessage("You have to leave your current server before opening a new one.");
+					break;
+				}
+				if (commandArgs.length != 2) {
+					displayMessage("Usage: /host <port number>");
+					break;
+				}
+				try {
+					gameSocketController.hostServer(Integer.parseInt(commandArgs[1]));
+				} catch(NumberFormatException e) {
+					displayMessage("The port number must be an integer.");
+				}
 				break;
 
 			case "join":
@@ -176,11 +197,17 @@ public class ChatBox extends JDialog {
 				break;
 
 			case "list":
-				if (gameSocketController.getRole().equals("host")) {
+				if (gameSocketController.getRole().equals("")) {
+					displayMessage("You're not connected to a server.");
+				}
+				else if (gameSocketController.getRole().equals("host")) {
 					ArrayList<String> userList = ((ChatServer)(gameSocketController.getSocket())).getUserList();
 					for (int i = 0; i < userList.size(); i++) {
 						displayMessage(userList.get(i));
 					}
+				}
+				else {
+					sendMessage(new String[]{HOST_REQUEST, "list"});
 				}
 				break;
 				

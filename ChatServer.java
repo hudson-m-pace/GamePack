@@ -20,8 +20,8 @@ public class ChatServer implements GameSocket {
 		connectionListener.start();
 	}
 
-	public void receiveMessage(String[] message) {
-		chatBox.displayMessage(message[1]);
+	public void receiveMessage(String message) {
+		chatBox.displayMessage(message);
 	}
 
 	public void sendMessage(String[] message) {
@@ -31,10 +31,12 @@ public class ChatServer implements GameSocket {
 	public void sendToClients(String[] message, int source) {
 		for (int i = 0; i < outList.size(); i++) {
 			if (i != source) {
-				outList.get(i).println(message[0]);
 				outList.get(i).println(message[1]);
 			}
 		}
+	}
+	public void sendToClient(String[] message, int destination) {
+		outList.get(destination).println(message[1]);
 	}
 
 	public ArrayList<String> getUserList() {
@@ -62,6 +64,20 @@ public class ChatServer implements GameSocket {
 		return false;
 	}
 
+	public void processHostRequest(String[] request, int j) {
+		switch (request[1]) {
+			case "list":
+				String userListString = "";
+				for (int i = 0; i < userList.size(); i++) {
+					if (i != 0) {
+						userListString += "\n";
+					}
+					userListString += userList.get(i);
+				}
+				sendToClient(new String[]{ChatBox.PUBLIC_MESSAGE, userListString}, j);
+		}
+	}
+
 		
 
 	private class Receiver implements Runnable {
@@ -77,8 +93,13 @@ public class ChatServer implements GameSocket {
 							if (currentList.get(i).ready()) {
 								message[0] = currentList.get(i).readLine();
 								message[1] = currentList.get(i).readLine();
-								sendToClients(message, i);
-								receiveMessage(message);
+								if (message[0].equals(ChatBox.PUBLIC_MESSAGE)) {
+									sendToClients(message, i);
+									receiveMessage(message[1]);
+								}
+								else if (message[0].equals(ChatBox.HOST_REQUEST)) {
+									processHostRequest(message, i);
+								}
 							}
 						} 
 					}
@@ -101,23 +122,23 @@ public class ChatServer implements GameSocket {
 
 		public void run() {
 			try {
-				receiveMessage(new String[] {"privatemsg", "starting server..."});
+				receiveMessage("starting server...");
 				ServerSocket serverSocket = new ServerSocket(portNumber);
-				receiveMessage(new String[] {"privatemsg", "server started on port " + portNumber + "."});
+				receiveMessage("server started on port " + portNumber + ".");
 
 				receiver = new Thread(new Receiver());
 				receiver.start();
 
 				while (!Thread.interrupted()) {
 					Socket clientSocket = serverSocket.accept();
-					receiveMessage(new String[] {"chatmsg", "connection from " + clientSocket.getInetAddress() + "."});
+					receiveMessage("connection from " + clientSocket.getInetAddress() + ".");
 					userList.add(clientSocket.getInetAddress().getHostAddress());
 					outList.add(new PrintWriter(clientSocket.getOutputStream(), true));
 					inList.add(new BufferedReader(new InputStreamReader(clientSocket.getInputStream())));
 				}
 			} catch(IOException e) {
-				receiveMessage(new String[] {"chatmsg", "Exception caught when trying to listen on port " + portNumber + " or listening for a connection"});
-				receiveMessage(new String[] {"chatmsg", e.getMessage()});
+				receiveMessage("Exception caught when trying to listen on port " + portNumber + " or listening for a connection");
+				receiveMessage(e.getMessage());
 			}
 		}
 	}
