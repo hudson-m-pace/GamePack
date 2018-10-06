@@ -26,16 +26,18 @@ public class ChatClient implements GameSocket {
 
 	public void close() {
 		receiver.interrupt();
-		receiveMessage("disconnected.");
+		receiveMessage(new String[]{ChatBox.PRIVATE_MESSAGE, "disconnected."});
 	}
 
 	public void sendMessage(String[] message) {
+		if (out != null) {
 		out.println(message[0]);
 		out.println(message[1]);
 	}
+	}
 
-	public void receiveMessage(String message) {
-		chatBox.displayMessage(message);
+	public void receiveMessage(String[] message) {
+		chatBox.displayMessage(message[1]);
 	}
 
 
@@ -48,11 +50,12 @@ public class ChatClient implements GameSocket {
 				chatBox.displayMessage("Connected.");
 
 				out = new PrintWriter(server.getOutputStream(), true);
+				sendMessage(new String[]{ChatBox.HOST_REQUEST, "setname " + chatBox.getScreenName()});
 				in = new BufferedReader(new InputStreamReader(server.getInputStream()));
 				try {
 					while (!Thread.interrupted()) {
 						if (in.ready()) {
-							receiveMessage(in.readLine());
+							receiveMessage(new String[]{ChatBox.PRIVATE_MESSAGE, in.readLine()});
 						}	
 						Thread.sleep(200);
 					}

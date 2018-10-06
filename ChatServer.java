@@ -9,7 +9,7 @@ public class ChatServer implements GameSocket {
 	private ChatBox chatBox;
 	private ArrayList<BufferedReader> inList = new ArrayList<BufferedReader>();
 	private ArrayList<PrintWriter> outList = new ArrayList<PrintWriter>();
-	private ArrayList<String> userList = new ArrayList<String>();
+	private ArrayList<String[]> userList = new ArrayList<String[]>();
 
 	public ChatServer(int portNumber, ChatBox chatBox) throws IOException {
 
@@ -20,12 +20,22 @@ public class ChatServer implements GameSocket {
 		connectionListener.start();
 	}
 
-	public void receiveMessage(String message) {
-		chatBox.displayMessage(message);
+	public void receiveMessage(String[] message) {
+		if (message[0].equals(ChatBox.HOST_REQUEST)) {
+			processHostRequest(message, -1);
+		}
+		else {
+			chatBox.displayMessage(message[1]);
+		}
 	}
 
 	public void sendMessage(String[] message) {
-		sendToClients(message, -1);
+		if (message[0].equals(ChatBox.HOST_REQUEST)) {
+			processHostRequest(message, -1);
+		}
+		else {
+			sendToClients(message, -1);
+		}
 	}
 
 	public void sendToClients(String[] message, int source) {
@@ -39,9 +49,6 @@ public class ChatServer implements GameSocket {
 		outList.get(destination).println(message[1]);
 	}
 
-	public ArrayList<String> getUserList() {
-		return userList;
-	}
 
 	public void close() {
 		receiver.interrupt();
@@ -65,16 +72,26 @@ public class ChatServer implements GameSocket {
 	}
 
 	public void processHostRequest(String[] request, int j) {
-		switch (request[1]) {
+		String[] args = request[1].split(" ");
+		switch (args[0]) {
 			case "list":
 				String userListString = "";
 				for (int i = 0; i < userList.size(); i++) {
 					if (i != 0) {
 						userListString += "\n";
 					}
-					userListString += userList.get(i);
+					userListString = userListString + userList.get(i)[1] + "  :     " + userList.get(i)[0];
 				}
-				sendToClient(new String[]{ChatBox.PUBLIC_MESSAGE, userListString}, j);
+				if (j == -1) {
+					receiveMessage(new String[]{ChatBox.PUBLIC_MESSAGE, userListString});
+				}
+				else {
+					sendToClient(new String[]{ChatBox.PUBLIC_MESSAGE, userListString}, j);
+				}
+				break;
+			case "setname":
+				userList.get(j)[1] = args[1];
+				break;
 		}
 	}
 
@@ -95,7 +112,7 @@ public class ChatServer implements GameSocket {
 								message[1] = currentList.get(i).readLine();
 								if (message[0].equals(ChatBox.PUBLIC_MESSAGE)) {
 									sendToClients(message, i);
-									receiveMessage(message[1]);
+									receiveMessage(message);
 								}
 								else if (message[0].equals(ChatBox.HOST_REQUEST)) {
 									processHostRequest(message, i);
@@ -122,23 +139,23 @@ public class ChatServer implements GameSocket {
 
 		public void run() {
 			try {
-				receiveMessage("starting server...");
+				receiveMessage(new String[]{ChatBox.PRIVATE_MESSAGE, "starting server..."});
 				ServerSocket serverSocket = new ServerSocket(portNumber);
-				receiveMessage("server started on port " + portNumber + ".");
+				receiveMessage(new String[]{ChatBox.PRIVATE_MESSAGE, "server started on port " + portNumber + "."});
 
 				receiver = new Thread(new Receiver());
 				receiver.start();
 
 				while (!Thread.interrupted()) {
 					Socket clientSocket = serverSocket.accept();
-					receiveMessage("connection from " + clientSocket.getInetAddress() + ".");
-					userList.add(clientSocket.getInetAddress().getHostAddress());
+					receiveMessage(new String[]{ChatBox.PRIVATE_MESSAGE, "connection from " + clientSocket.getInetAddress().getHostAddress() + "."});
+					userList.add(new String[]{clientSocket.getInetAddress().getHostAddress(), ""});
 					outList.add(new PrintWriter(clientSocket.getOutputStream(), true));
 					inList.add(new BufferedReader(new InputStreamReader(clientSocket.getInputStream())));
 				}
 			} catch(IOException e) {
-				receiveMessage("Exception caught when trying to listen on port " + portNumber + " or listening for a connection");
-				receiveMessage(e.getMessage());
+				receiveMessage(new String[]{ChatBox.PRIVATE_MESSAGE, "Exception caught when trying to listen on port " + portNumber + " or listening for a connection"});
+				receiveMessage(new String[]{ChatBox.PRIVATE_MESSAGE, e.getMessage()});
 			}
 		}
 	}

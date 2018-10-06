@@ -8,7 +8,7 @@ public class GameSocketController {
 	private GamePackFrame gamePackFrame;
 	private GameSocket socket;
 	private ChatBox chatBox;
-	private String role, screenName;
+	private String role;
 
 	public GameSocketController(GamePackFrame gamePackFrame) {
 		this.chatBox = new ChatBox(this);
@@ -144,7 +144,6 @@ public class GameSocketController {
 		}
 		try {
 			socket = new ChatServer(portNumber, chatBox);
-			screenName = "host: ";
 			role = "host";
 		} catch(IOException e) {
 			chatBox.displayMessage("Exception caught while listening on port " + portNumber + ".");
@@ -172,7 +171,6 @@ public class GameSocketController {
 		}
 		try {
 			socket = new ChatClient(hostName, portNumber, chatBox);
-			screenName = "client: ";
 			role = "client";
 		} catch(IOException e) {
 			chatBox.displayMessage("Exception caught while attempting to connect to " + hostName + ":" + portNumber + ".");

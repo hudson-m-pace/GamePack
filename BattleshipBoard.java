@@ -39,13 +39,13 @@ public class BattleshipBoard extends GameBoard {
 		startMultiplayerGame.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				if (gameSocketController.getRole().equals("")) {
-					gameSocketController.getSocket().receiveMessage("You aren't connected to a server.")
+					gameSocketController.getSocket().receiveMessage(new String[]{ChatBox.PRIVATE_MESSAGE, "You aren't connected to a server."});
 					return;
 				}
 				remove(board);
 				createBoard();
 			}
-		})
+		});
 		return menu;
 	}
 

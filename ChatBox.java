@@ -100,6 +100,11 @@ public class ChatBox extends JDialog {
 	}
 
 
+	public String getScreenName() {
+		return screenName;
+	}
+
+
 	// Write a message to the chatbox.
 	public void displayMessage(String message) {
 		messageBox.append(message + "\n");
@@ -201,10 +206,7 @@ public class ChatBox extends JDialog {
 					displayMessage("You're not connected to a server.");
 				}
 				else if (gameSocketController.getRole().equals("host")) {
-					ArrayList<String> userList = ((ChatServer)(gameSocketController.getSocket())).getUserList();
-					for (int i = 0; i < userList.size(); i++) {
-						displayMessage(userList.get(i));
-					}
+					sendMessage(new String[]{HOST_REQUEST, "list"});
 				}
 				else {
 					sendMessage(new String[]{HOST_REQUEST, "list"});
@@ -212,6 +214,10 @@ public class ChatBox extends JDialog {
 				break;
 				
 			case "setname":
+				if (!gameSocketController.getRole().equals("")) {
+					displayMessage("You can't change your name while connected to a server.");
+					break;
+				}
 				if (commandArgs.length == 2) {
 					screenName = commandArgs[1];
 					displayMessage("name set to " + screenName);
